@@ -1,21 +1,50 @@
 'use strict';
 
 
-const express = require('express');
-const app = express(); // initialize your express app instance
-const cors = require('cors');
+
+
 require('dotenv').config();
-
-const weatherData = require('./data/weather.json');
-const { Server } = require('http');
-Server.use(cors());
-
+const cors = require('cors');
+const express = require('express');
+const data = require('./data/weather.json');
+const app = express();
 const PORT = process.env.PORT;
+app.use(cors());
 
 
-app.get('/',
-  (request, response) => { // callback function of what we should do with our request
-    response.send('Hello World 🥳'); // our endpoint function response
+// http://localhost:3001/weather?lat=31.95&lon=35.91&searchQuery=Amman
+app.get('/weather', (req, res) => {
+  const lat = Number(req.query.lat);
+  const lon = Number(req.query.lon);
+  const cityName = req.query.searchQuery.toLowerCase();
+
+  console.log(lat, lon, cityName);
+  const result = data.find(item => item.lat === lat && item.lon === lon && item.city_name.toLowerCase() === cityName ? item : '');
+
+  result ? res.send(createForcastObj(result)) : res.status(500).send('Something went wrong!');
+
+});
+
+
+const createForcastObj = (weatherObj) =>{
+  const forcastObjList = [];
+  weatherObj.data.map( item => {
+    const description = `Low of ${item.low_temp}, high of ${item.high_temp} with ${item.weather.description}`;
+    const date = item.datetime;
+    forcastObjList.push(new Forcast(date, description));
   });
+  return forcastObjList;
+};
 
-app.listen(3001);
+
+class Forcast {
+  constructor(date = '', description =''){
+    this.date = date;
+    this.description = description;
+  }
+}
+
+
+app.listen(PORT, () => {
+  console.log(`I'm listening on port:${PORT}`);
+});
