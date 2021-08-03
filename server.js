@@ -1,50 +1,53 @@
 'use strict';
 
-
-
-
 require('dotenv').config();
-const cors = require('cors');
 const express = require('express');
-const data = require('./data/weather.json');
-const app = express();
+const cors = require('cors');
+const weatherJSON = require('./data/weather.json');
+
+const server = express();
+server.use(cors());
+
 const PORT = process.env.PORT;
-app.use(cors());
+
+//https://api.weatherbit.io/v2.0/current?lat=35.7796&lon=-78.6382&key=528201f1d0e44da091e9e2dd6b0a8bd8&include=minutely
+//http://api.weatherbit.io/v2.0/current
+//localhost:3001/weather?searchQuery=amman
+server.get('/weather', getWeather);
+
+server.use('*', (req, res) =>
+  res.status(404).send('Page not found'));
+
+function getWeather(req, res) {
+  let searchQuery = req.query.searchQuery;
+
+  const city = weatherJSON.find(city =>
+    city.city_name.toLowerCase() === searchQuery.toLowerCase());
 
 
-// http://localhost:3001/weather?lat=31.95&lon=35.91&searchQuery=Amman
-app.get('/weather', (req, res) => {
-  const lat = Number(req.query.lat);
-  const lon = Number(req.query.lon);
-  const cityName = req.query.searchQuery.toLowerCase();
+  {
+    const weatherArray = city.data.map(day =>
+      new Forecast(day)
+    );
 
-  console.log(lat, lon, cityName);
-  const result = data.find(item => item.lat === lat && item.lon === lon && item.city_name.toLowerCase() === cityName ? item : '');
+    res.status(200).send(weatherArray);
+  }
 
-  result ? res.send(createForcastObj(result)) : res.status(500).send('Something went wrong!');
-
-});
-
-
-const createForcastObj = (weatherObj) =>{
-  const forcastObjList = [];
-  weatherObj.data.map( item => {
-    const description = `Low of ${item.low_temp}, high of ${item.high_temp} with ${item.weather.description}`;
-    const date = item.datetime;
-    forcastObjList.push(new Forcast(date, description));
-  });
-  return forcastObjList;
-};
-
-
-class Forcast {
-  constructor(date = '', description =''){
-    this.date = date;
-    this.description = description;
+  {
+    errorHandler(res);
   }
 }
 
+function errorHandler(res) {
+  res.status(500).send('Something went Wrong');
+}
 
-app.listen(PORT, () => {
-  console.log(`I'm listening on port:${PORT}`);
-});
+
+function Forecast(item) {
+  this.valid_date = item.valid_date;
+  this.description = item.weather.description;
+}
+
+server.listen(PORT, () => console.log(`I'm listening on ${PORT}`));
+
+
