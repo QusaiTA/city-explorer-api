@@ -10,9 +10,6 @@ server.use(cors());
 
 const PORT = process.env.PORT;
 
-//https://api.weatherbit.io/v2.0/current?lat=35.7796&lon=-78.6382&key=528201f1d0e44da091e9e2dd6b0a8bd8&include=minutely
-//http://api.weatherbit.io/v2.0/current
-//localhost:3001/weather?searchQuery=amman
 server.get('/weather', getWeather);
 
 server.use('*', (req, res) =>
