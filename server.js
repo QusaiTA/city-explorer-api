@@ -1,50 +1,62 @@
-'use strict';
 
+'use strict';
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const weatherJSON = require('./data/weather.json');
-
+const weatherKEY = process.env.WEATHER_BIT_KEY;
+const weatherURL = process.env.WEATHER_BIT_URL;
+const { default: axios } = require('axios');
 const server = express();
 server.use(cors());
-
 const PORT = process.env.PORT;
+const movieKEY= process.env.MOVIE_API_KEY;
+const movieURL= process.env.MOVIE_API_URL;
 
-server.get('/weather', getWeather);
 
-server.use('*', (req, res) =>
-  res.status(404).send('Page not found'));
+server.get('/weather', forcastMethod);
+server.get('/movies', movieGetterMethod);
 
-function getWeather(req, res) {
+async function forcastMethod(req,res){
+  let { lat, lon } = req.query;
+  const url=`${weatherURL}?key=${weatherKEY}&lon=${lon}&lat=${lat}`;
+  const gettingWeather=await axios.get(url);
+  const weatherArray=gettingWeather.data.data.map(item=>new Forecast(item));
+  console.log(weatherArray);
+
+  res.json(weatherArray);
+}
+class Forecast {
+  constructor(value) {
+    this.valid_date = value.valid_date;
+    this.description = value.weather.description;
+  }
+}
+
+async function movieGetterMethod(req,res){
+
   let searchQuery = req.query.searchQuery;
+  const url =`${movieURL}?api_key=${movieKEY}&query=${searchQuery}`;
+  const gettingMovie =await axios.get(url);
 
-  const city = weatherJSON.find(city =>
-    city.city_name.toLowerCase() === searchQuery.toLowerCase());
+
+  const moviesArray=gettingMovie.data.results.map(item=>new Movies(item));
+  console.log(moviesArray);
+  res.json(moviesArray);
 
 
-  {
-    const weatherArray = city.data.map(day =>
-      new Forecast(day)
-    );
+}
 
-    res.status(200).send(weatherArray);
+class Movies {
+
+  constructor(value){
+    this.popularity = value.popularity;
+    this.release_date = value.release_date;
+    this.title = value.title;
+    this.vote_average = value.vote_average;
+    this.vote_count = value.vote_count;
+
+
   }
-
-  {
-    errorHandler(res);
-  }
 }
-
-function errorHandler(res) {
-  res.status(500).send('Something went Wrong');
-}
-
-
-function Forecast(item) {
-  this.valid_date = item.valid_date;
-  this.description = item.weather.description;
-}
-
-server.listen(PORT, () => console.log(`I'm listening on ${PORT}`));
-
-
+server.use('*', (req, res) => res.status(404).send('page not found'));
+server.listen(PORT, () => console.log(`hello from the port num ${PORT}`));
