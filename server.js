@@ -14,7 +14,6 @@ const movieURL= process.env.MOVIE_API_URL;
 
 
 server.get('/weather', forcastMethod);
-server.get('/movies', movieGetterMethod);
 
 async function forcastMethod(req,res){
   let { lat, lon } = req.query;
@@ -32,15 +31,16 @@ class Forecast {
   }
 }
 
+server.get('/movies', movieGetterMethod);
 async function movieGetterMethod(req,res){
 
-  let searchQuery = req.query.searchQuery;
+  let searchQuery = req.searchQuery;
   const url =`${movieURL}?api_key=${movieKEY}&query=${searchQuery}`;
   const gettingMovie =await axios.get(url);
 
 
   const moviesArray=gettingMovie.data.results.map(item=>new Movies(item));
-  console.log(moviesArray);
+  console.log(gettingMovie.data.results);
   res.json(moviesArray);
 
 
@@ -48,12 +48,13 @@ async function movieGetterMethod(req,res){
 
 class Movies {
 
-  constructor(value){
-    this.popularity = value.popularity;
-    this.release_date = value.release_date;
-    this.title = value.title;
-    this.vote_average = value.vote_average;
-    this.vote_count = value.vote_count;
+  constructor(movie){
+    this.popularity = movie.popularity;
+    this.release_date = movie.release_date;
+    this.title = movie.title;
+    this.poster_path = `https://image.tmdb.org/t/p/w500/${movie.poster_path}`;
+    this.vote_average = movie.vote_average;
+    this.vote_count = movie.vote_count;
 
 
   }
