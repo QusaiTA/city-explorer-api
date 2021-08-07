@@ -8,9 +8,12 @@ let myMemory = {};
 async function movieGetterMethod(req,res){
   let searchQuery = req.query.searchQuery;
   if (myMemory[searchQuery] !== undefined) {
+    console.log('hello from cashing');
+
 
     res.send(myMemory[searchQuery]);
   } else {
+    console.log('hello from moviesAPI');
 
     console.log(req);
     searchQuery = searchQuery.toLowerCase();
